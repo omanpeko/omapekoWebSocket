@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>おまぺこクライアント</title>
+  <style>
+    /* フォント設定 */
+    @font-face {
+      font-family: '07 ラノベPOP';
+      src: url('./font/ラノベPOP.otf') format('opentype');
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #222222; /* 背景色を#222222に設定 */
+      font-family: '07 ラノベPOP', sans-serif; /* フォントを適用 */
+    }
+
+    /* 透明ボックス */
+    .overlay-box {
+      position: absolute;
+      width: 250px;
+      height: 160px;
+      background-color: transparent;
+      opacity: 0; /* 初期状態は非表示 */
+      animation: fadeIn 1.3s forwards; /* アニメーションを追加 */
+    }
+
+    /* プレイヤーネームのテキスト */
+    .player-name {
+      position: absolute;
+      top: 112px;
+      left: 41px;
+      font-size: 20px;
+      color: #ffffff;
+      text-align: left;
+    }
+
+    /* プレイヤーポイントのテキスト */
+    .player-points {
+      position: absolute;
+      top: 114px;
+      left: 158px;
+      width: 65px;
+      font-size: 18px;
+      color: rgb(221, 195, 128);
+      text-align: right;
+    }
+
+    /* ウルトポイントのテキスト */
+    .ult-points {
+      position: absolute;
+      letter-spacing: 2px;
+      top: 90.5px;
+      left: 157px;
+      width: 65px;
+      font-size: 16px;
+      color: #ffffff;
+      text-align: right;
+    }
+
+    /* プレイヤーアイコン */
+    .player-icon {
+      position: absolute;
+      top: 11px;
+      left: 64px;
+      width: 98px;
+      height: 98px;
+      -webkit-mask-image: url('/img/omapeko/プレイヤーアイコン.png');
+      -webkit-mask-size: cover;
+      -webkit-mask-repeat: no-repeat;
+      mask-image: url('/img/omapeko/プレイヤーアイコン.png');
+      mask-size: cover;
+      mask-repeat: no-repeat;
+    }
+
+    /* Agent Icon */
+    .agent-icon {
+      position: absolute;
+      top: 8px;
+      left: 152px;
+      width: 72px;
+      height: 72px;
+    }
+
+    /* Yellow Bar */
+    .yellow-bar {
+      position: absolute;
+      top: 139.5px;
+      left: 40.5px;
+      width: 183px;
+      height: 3px;
+    }
+
+    /* Ult Background */
+    .ult-background {
+      position: absolute;
+      top: 92.5px;
+      left: 167px;
+      width: 15px;
+      height: 15px;
+    }
+
+    /* Fire GIF */
+    .fire-gif {
+      position: absolute;
+      top: 60px;
+      left: 150px;
+      width: 50px;
+      height: 50px;
+    }
+
+    /* プレイヤーアイコンのフェードアウト */
+    @keyframes fadeOut {
+      0% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+      }
+    }
+
+    /* プレイヤーアイコンのフェードイン */
+    @keyframes fadeIn {
+      0% {
+        opacity: 0;
+      }
+      100% {
+        opacity: 1;
+      }
+    }
+
+    /* プレイヤーネームとウルトポイントのテキスト色変更 */
+    @keyframes changeTextColor {
+      0% {
+        color: #ffffff; /* 0%時点で色は白 */
+      }
+      100% {
+        color: #CDBCA3;
+      }
+    }
+
+    /* プレイヤーポイントのテキスト色変更 */
+    @keyframes changePlayerPointsColor {
+      0% {
+        color: rgb(221, 195, 128);
+      }
+      100% {
+        color: #886D65;
+      }
+    }
+
+    /* バー黄色のフェードアウト */
+    @keyframes fadeOutYellowBar {
+      0% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+      }
+    }
+
+    /* バー黄色のフェードイン */
+    @keyframes fadeInYellowBar {
+      0% {
+        opacity: 0;
+      }
+      100% {
+        opacity: 1;
+      }
+    }
+
+    /* エージェントアイコンの位置をリバース */
+    @keyframes moveAgentIcon {
+      0% {
+        transform: translateX(0);
+      }
+      100% {
+        transform: translateX(-89px); /* 移動する距離 */
+      }
+    }
+
+    @keyframes moveAgentIconReverse {
+      0% {
+        transform: translateX(-89px); /* 初期位置は左に移動 */
+      }
+      100% {
+        transform: translateX(0); /* 最終的に元の位置に戻る */
+      }
+    }
+
+    /* プレイヤーアイコンにイージングを追加 */
+    @keyframes easeFadeOut {
+      0% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0; /* 最終的に完全に消える */
+      }
+    }
+
+    /* ボックスごとのアニメーションのディレイを設定 */
+    #overlayBox1 {
+      animation-delay: 0s; /* box1はすぐに表示 */
+    }
+
+    #overlayBox2 {
+      animation-delay: 0.2s; /* box2は0.2秒後に表示 */
+    }
+
+    #overlayBox3 {
+      animation-delay: 0.4s; /* box3は0.4秒後に表示 */
+    }
+
+    #overlayBox4 {
+      animation-delay: 0.6s; /* box4は0.6秒後に表示 */
+    }
+
+    #overlayBox5 {
+      animation-delay: 0.8s; /* box5は0.8秒後に表示 */
+    }
+
+  </style>
+</head>
+<body>
+  <!-- ボックス1 -->
+  <div class="overlay-box" id="overlayBox1" style="top: 97px;">
+    <img src="/img/omapeko/飾り１.png" alt="飾り1" style="position: absolute; top: 0; left: 32px;">
+    <img src="/img/omapeko/プレイヤーアイコン.png" alt="プレイヤーアイコン" class="player-icon">
+    <img src="/img/omapeko/Yoru_icon72.png" alt="Agent Icon" class="agent-icon">
+    <img src="/img/omapeko/バー黄色.png" alt="Yellow Bar" class="yellow-bar">
+    <img src="/img/omapeko/ウルト背景.png" alt="Ult Background" class="ult-background">
+    <img src="/img/omapeko/Firegifw_to5per.gif" alt="Fire GIF" class="fire-gif">
+    <div class="player-name">OMANPEKO</div>
+    <div class="player-points">225 pt</div>
+    <div class="ult-points">6/6</div>
+  </div>
+
+  <!-- ボックス2～5 -->
+  <div class="overlay-box" id="overlayBox2" style="top: 257px;">
+    <img src="/img/omapeko/飾り１.png" alt="飾り1" style="position: absolute; top: 0; left: 32px;">
+    <img src="/img/omapeko/プレイヤーアイコン.png" alt="プレイヤーアイコン" class="player-icon">
+    <img src="/img/omapeko/Yoru_icon72.png" alt="Agent Icon" class="agent-icon">
+    <img src="/img/omapeko/バー黄色.png" alt="Yellow Bar" class="yellow-bar">
+    <img src="/img/omapeko/ウルト背景.png" alt="Ult Background" class="ult-background">
+    <img src="/img/omapeko/Firegifw_to5per.gif" alt="Fire GIF" class="fire-gif">
+    <div class="player-name">OMANPEKO</div>
+    <div class="player-points">225 pt</div>
+    <div class="ult-points">6/6</div>
+  </div>
+  <div class="overlay-box" id="overlayBox3" style="top: 417px;">
+    <img src="/img/omapeko/飾り１.png" alt="飾り1" style="position: absolute; top: 0; left: 32px;">
+    <img src="/img/omapeko/プレイヤーアイコン.png" alt="プレイヤーアイコン" class="player-icon">
+    <img src="/img/omapeko/Yoru_icon72.png" alt="Agent Icon" class="agent-icon">
+    <img src="/img/omapeko/バー黄色.png" alt="Yellow Bar" class="yellow-bar">
+    <img src="/img/omapeko/ウルト背景.png" alt="Ult Background" class="ult-background">
+    <img src="/img/omapeko/Firegifw_to5per.gif" alt="Fire GIF" class="fire-gif">
+    <div class="player-name">OMANPEKO</div>
+    <div class="player-points">225 pt</div>
+    <div class="ult-points">6/6</div>
+  </div>
+  <div class="overlay-box" id="overlayBox4" style="top: 577px;">
+    <img src="/img/omapeko/飾り１.png" alt="飾り1" style="position: absolute; top: 0; left: 32px;">
+    <img src="/img/omapeko/プレイヤーアイコン.png" alt="プレイヤーアイコン" class="player-icon">
+    <img src="/img/omapeko/Yoru_icon72.png" alt="Agent Icon" class="agent-icon">
+    <img src="/img/omapeko/バー黄色.png" alt="Yellow Bar" class="yellow-bar">
+    <img src="/img/omapeko/ウルト背景.png" alt="Ult Background" class="ult-background">
+    <img src="/img/omapeko/Firegifw_to5per.gif" alt="Fire GIF" class="fire-gif">
+    <div class="player-name">OMANPEKO</div>
+    <div class="player-points">225 pt</div>
+    <div class="ult-points">6/6</div>
+  </div>
+  <div class="overlay-box" id="overlayBox5" style="top: 737px;">
+    <img src="/img/omapeko/飾り１.png" alt="飾り1" style="position: absolute; top: 0; left: 32px;">
+    <img src="/img/omapeko/プレイヤーアイコン.png" alt="プレイヤーアイコン" class="player-icon">
+    <img src="/img/omapeko/Yoru_icon72.png" alt="Agent Icon" class="agent-icon">
+    <img src="/img/omapeko/バー黄色.png" alt="Yellow Bar" class="yellow-bar">
+    <img src="/img/omapeko/ウルト背景.png" alt="Ult Background" class="ult-background">
+    <img src="/img/omapeko/Firegifw_to5per.gif" alt="Fire GIF" class="fire-gif">
+    <div class="player-name">OMANPEKO</div>
+    <div class="player-points">225 pt</div>
+    <div class="ult-points">6/6</div>
+  </div>
+
+  <button onclick="showBox()">ボックスを表示</button>
+  <button onclick="hideBox()">ボックスを非表示</button>
+
+  <script>
+    const ws = new WebSocket('http://localhost:3000');
+
+    ws.onopen = () => {
+      console.log('WebSocketサーバーに接続しました');
+    };
+
+    ws.onmessage = (event) => {
+      console.log("受信したメッセージ:", event.data);
+
+      const message = event.data;
+
+      // 受信したデータが文字列の場合
+      if (typeof message === "string") {
+        if (message === "show") {
+          showBox();
+        } else if (message === "hide") {
+          hideBox();
+        } else if (message === "gamestart") {
+          gamestarttask(); // ゲームスタート時にアイコンをランダムに設定
+        } else {
+          try {
+            // JSONとして解析を試みる
+            const data = JSON.parse(message);
+
+            // データがオブジェクトで "index" キーを持っている場合
+            if (data && typeof data === "object" && "index" in data) {
+              console.log("データが条件を満たしました:", data);
+
+              const boxId = `overlayBox${data.index}`;
+              const boxElement = document.getElementById(boxId);
+
+              if (!boxElement) {
+                console.error(`ボックスが見つかりません: ${boxId}`);
+                return;
+              }
+
+              // プレイヤーネームの更新
+              const playerNameElement = boxElement.querySelector(".player-name");
+              if (playerNameElement) {
+                const limitedName = limitPlayerName(data.playerName || "N/A");
+                playerNameElement.textContent = limitedName;
+              }
+
+              // ウルトポイントの更新
+              const ultPointsElement = boxElement.querySelector(".ult-points");
+              if (ultPointsElement) {
+                const ultText = `${data.ult || 0}/${data.ultMax || 0}`;
+                ultPointsElement.textContent = ultText;
+
+                // Fire GIFの表示/非表示
+                const fireGifElement = boxElement.querySelector(".fire-gif");
+                if (fireGifElement) {
+                  if (parseInt(data.ult, 10) === parseInt(data.ultMax, 10)) {
+                    fireGifElement.style.display = "block";
+                  } else {
+                    fireGifElement.style.display = "none";
+                  }
+                }
+              }
+
+              // プレイヤーポイントの更新
+              const playerPointsElement = boxElement.querySelector(".player-points");
+              if (playerPointsElement) {
+                playerPointsElement.textContent = `${data.Point || "0"} pt`;
+              }
+
+              // エージェントアイコンの更新
+              const agentIconElement = boxElement.querySelector(".agent-icon");
+              if (agentIconElement) {
+                const agentName = data.agent || "default";
+                const isAlive = data.alive === "生"; // "生" か "死" を判定
+                const iconSuffix = isAlive ? "" : "m"; // "生" ならそのまま、"死" なら "m" を追加
+                agentIconElement.src = `./img/agent/${agentName}_icon${iconSuffix}.png`;
+              }
+
+              // プレイヤーの状態を更新
+              updatePlayerState(data);  // 状態を更新する関数を呼び出し
+            } else {
+              console.log("データ形式が条件を満たしていません:", data);
+            }
+          } catch (jsonError) {
+            // JSONでない場合、通常の文字列として処理
+            console.log("通常の文字列データ:", message);
+          }
+        }
+        return;
+      }
+    };
+
+    function updatePlayerState(data) {
+      const boxId = `overlayBox${data.index}`;
+      const boxElement = document.getElementById(boxId);
+
+      if (!boxElement) {
+        console.error(`ボックスが見つかりません: ${boxId}`);
+        return;
+      }
+
+      const playerNameElement = boxElement.querySelector(".player-name");
+      const ultPointsElement = boxElement.querySelector(".ult-points");
+      const playerPointsElement = boxElement.querySelector(".player-points");
+      const yellowBarElement = boxElement.querySelector(".yellow-bar");
+      const playerIcon = boxElement.querySelector(".player-icon");
+      const agentIcon = boxElement.querySelector(".agent-icon");
+
+      if (data.alive === "死") {
+        // プレイヤーアイコンのフェードアウト
+        playerIcon.style.animation = "easeFadeOut 1s linear forwards";
+
+        // エージェントアイコンの移動
+        agentIcon.style.animation = "moveAgentIcon 0.8s ease-out forwards";
+
+        // プレイヤーネームとウルトポイントの色変更
+        playerNameElement.style.animation = "changeTextColor 1s forwards";
+        ultPointsElement.style.animation = "changeTextColor 1s forwards";
+
+        // プレイヤーポイントの色変更
+        playerPointsElement.style.animation = "changePlayerPointsColor 1s forwards";
+
+        // 黄色バーのフェードアウト
+        yellowBarElement.style.animation = "fadeOutYellowBar 1s forwards";
+
+        // アイコンの変更
+        agentIcon.src = `./img/agent/${data.agent}_iconm.png`; // 死の時のアイコンに変更
+      } else if (data.alive === "生") {
+        // プレイヤーアイコンのフェードイン
+        playerIcon.style.animation = "fadeIn 1s linear forwards";
+
+        // エージェントアイコンを元の位置に戻す
+        agentIcon.style.animation = "moveAgentIconReverse 0.8s ease-out forwards";
+
+        // プレイヤーネームとウルトポイントの色を元に戻す
+        playerNameElement.style.animation = "changeTextColor 1s reverse forwards";
+        ultPointsElement.style.animation = "changeTextColor 1s reverse forwards";
+
+        // プレイヤーポイントの色を元に戻す
+        playerPointsElement.style.animation = "changePlayerPointsColor 1s reverse forwards";
+
+        // 黄色バーのフェードイン
+        yellowBarElement.style.animation = "fadeInYellowBar 1s forwards";
+
+      }
+    }
+
+    function limitPlayerName(name) {
+      let totalPoints = 0;
+      let limitedName = "";
+
+      for (const char of name) {
+        // 半角は3ポイント、全角は4ポイント
+        const charPoints = char.match(/[ -~]/) ? 3 : 4;
+
+        // ポイントが24を超える場合、処理を終了
+        if (totalPoints + charPoints > 24) break;
+
+        totalPoints += charPoints;
+        limitedName += char;
+      }
+
+      return limitedName;
+    }
+
+    ws.onerror = (error) => {
+      console.error('WebSocketエラー:', error);
+    };
+
+    ws.onclose = () => {
+      console.log('WebSocket接続が切断されました');
+    };
+
+    function showBox() {
+      document.querySelectorAll('.overlay-box').forEach(box => box.style.display = 'block');
+      console.log('ボックスを表示しました');
+    }
+
+    function hideBox() {
+      document.querySelectorAll('.overlay-box').forEach(box => box.style.display = 'none');
+      console.log('ボックスを非表示にしました');
+    }
+
+    // ランダムに画像を選ぶための関数
+    function gamestarttask() {
+      // 1.png から 78.png までの番号を配列に格納
+      const availableIcons = Array.from({ length: 78 }, (_, i) => `${i + 1}.png`);
+
+      // プレイヤーアイコンの設定用の配列（プレイヤー10人分）
+      const assignedIcons = [];
+
+      // プレイヤー1〜10のアイコンをランダムに選ぶ
+      for (let i = 1; i <= 10; i++) {
+        const randomIndex = Math.floor(Math.random() * availableIcons.length);
+        const selectedIcon = availableIcons[randomIndex];
+
+        // 選ばれたアイコンを使用し、リストから削除
+        assignedIcons.push(selectedIcon);
+        availableIcons.splice(randomIndex, 1); // 被らないように削除
+      }
+
+      // 各プレイヤーにランダムに選ばれたアイコンを設定
+      for (let i = 1; i <= 10; i++) {
+        const playerIconElement = document.querySelector(`#overlayBox${i} .player-icon`);
+        if (playerIconElement) {
+          playerIconElement.src = `./img/VALORANTbanner/${assignedIcons[i - 1]}`; // ランダムで選ばれたアイコンを設定
+        }
+      }
+    }
+  </script>
+</body>
+</html>

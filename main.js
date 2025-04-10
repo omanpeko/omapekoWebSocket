@@ -1,36 +1,39 @@
-import express from "express";
-import { WebSocketServer } from "ws";
-import http from "http";
-
-console.log("起動");
+import express from 'express';
+import cors from 'cors';
+import { WebSocketServer } from 'ws';
 
 const app = express();
-const server = http.createServer(app);
+const port = process.env.PORT || 10000;
 
+app.use(cors());
+app.use(express.json());
+
+const server = app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
+
+// WebSocketサーバー
 const wss = new WebSocketServer({ server });
 
-wss.on("connection", (ws) => {
-  console.log("新しいクライアントが接続しました");
+let sockets = [];
 
-  ws.on("message", (message) => {
-    console.log(`サーバー: クライアントから受信したメッセージ: ${message}`);
-    
-    // ここでメッセージをブロードキャストする処理を追加
-    wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(message.toString());
-      }
-    });
-  });
+wss.on('connection', (ws) => {
+  console.log('WebSocket接続');
+  sockets.push(ws);
 
-  ws.on("close", () => {
-    console.log("クライアントが切断されました");
+  ws.on('close', () => {
+    sockets = sockets.filter(s => s !== ws);
   });
 });
 
-app.use(express.static("public"));
+// fetch受信 → WebSocket中継
+app.post('/send', (req, res) => {
+  const { text } = req.body;
+  console.log(`受信テキスト: ${text}`);
 
-const port = process.env.PORT || 3000;
-server.listen(port, () => {
-  console.log(`サーバーがポート ${port} で起動しました`);
+  sockets.forEach(ws => {
+    if (ws.readyState === 1) ws.send(text);
+  });
+
+  res.json({ status: 'OK' });
 });

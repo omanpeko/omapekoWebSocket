@@ -1,0 +1,11 @@
+# Exported from Render on 2025-04-10T02:52:07Z
+services:
+- type: web
+  name: omapekoWebSocket
+  runtime: node
+  repo: https://github.com/omanpeko/omapekoWebSocket
+  plan: free
+  region: singapore
+  buildCommand: yarn
+  startCommand: "0"
+version: "1"
